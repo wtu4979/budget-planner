@@ -79,29 +79,31 @@ export default function BudgetPlanner() {
   });
 
   // Ensure creditCards exists for backward compatibility
-  const creditCardsData = data.creditCards || [
-    { 
-      id: uuid(), 
-      name: "Chase Freedom Unlimited", 
-      creditLimit: 12500, 
-      lastStatementBalance: 0, 
-      available: 0 
-    },
-    { 
-      id: uuid(), 
-      name: "Chase Freedom Flex", 
-      creditLimit: 2000, 
-      lastStatementBalance: 0, 
-      available: 0 
-    },
-    { 
-      id: uuid(), 
-      name: "Chase Sapphire Preferred", 
-      creditLimit: 5000, 
-      lastStatementBalance: 0, 
-      available: 0 
-    },
-  ];
+  const creditCardsData = useMemo(() => {
+    return data.creditCards || [
+      { 
+        id: uuid(), 
+        name: "Chase Freedom Unlimited", 
+        creditLimit: 12500, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+      { 
+        id: uuid(), 
+        name: "Chase Freedom Flex", 
+        creditLimit: 2000, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+      { 
+        id: uuid(), 
+        name: "Chase Sapphire Preferred", 
+        creditLimit: 5000, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+    ];
+  }, [data.creditCards]);
 
   const totalIncome = useMemo(
     () => data.incomes.reduce((s, x) => s + (Number(x.amount) || 0), 0),
