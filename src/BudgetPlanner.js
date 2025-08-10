@@ -51,9 +51,57 @@ export default function BudgetPlanner() {
       { id: uuid(), name: "Transport", amount: 0 },
       { id: uuid(), name: "Subscriptions", amount: 0 },
     ],
+    creditCards: [
+      { 
+        id: uuid(), 
+        name: "Chase Freedom Unlimited", 
+        creditLimit: 12500, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+      { 
+        id: uuid(), 
+        name: "Chase Freedom Flex", 
+        creditLimit: 2000, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+      { 
+        id: uuid(), 
+        name: "Chase Sapphire Preferred", 
+        creditLimit: 5000, 
+        lastStatementBalance: 0, 
+        available: 0 
+      },
+    ],
     note: "",
     currency: "USD",
   });
+
+  // Ensure creditCards exists for backward compatibility
+  const creditCardsData = data.creditCards || [
+    { 
+      id: uuid(), 
+      name: "Chase Freedom Unlimited", 
+      creditLimit: 12500, 
+      lastStatementBalance: 0, 
+      available: 0 
+    },
+    { 
+      id: uuid(), 
+      name: "Chase Freedom Flex", 
+      creditLimit: 2000, 
+      lastStatementBalance: 0, 
+      available: 0 
+    },
+    { 
+      id: uuid(), 
+      name: "Chase Sapphire Preferred", 
+      creditLimit: 5000, 
+      lastStatementBalance: 0, 
+      available: 0 
+    },
+  ];
 
   const totalIncome = useMemo(
     () => data.incomes.reduce((s, x) => s + (Number(x.amount) || 0), 0),
@@ -64,6 +112,34 @@ export default function BudgetPlanner() {
     [data.expenses]
   );
   const remaining = totalIncome - totalExpenses;
+
+  // Calculate credit card spending
+  const creditCardSpending = useMemo(() => {
+    return creditCardsData.map(card => {
+      const lastBalance = Number(card.lastStatementBalance) || 0;
+      const available = Number(card.available) || 0;
+      const creditLimit = Number(card.creditLimit) || 0;
+      
+      // If both last balance and available are 0, assume no spending yet
+      if (lastBalance === 0 && available === 0) {
+        return {
+          ...card,
+          totalSpent: 0
+        };
+      }
+      
+      // Calculate total spent: Credit Limit - Available Credit - Last Statement Balance
+      const totalSpent = creditLimit - available - lastBalance;
+      return {
+        ...card,
+        totalSpent: Math.max(0, totalSpent) // Ensure non-negative
+      };
+    });
+  }, [creditCardsData]);
+
+  const totalCreditCardSpending = useMemo(() => {
+    return creditCardSpending.reduce((sum, card) => sum + card.totalSpent, 0);
+  }, [creditCardSpending]);
 
   const pieData = useMemo(() => {
     const base = data.expenses
@@ -84,10 +160,19 @@ export default function BudgetPlanner() {
   ];
 
   function updateRow(kind, id, patch) {
-    setData((d) => ({
-      ...d,
-      [kind]: d[kind].map((r) => (r.id === id ? { ...r, ...patch } : r)),
-    }));
+    setData((d) => {
+      const updatedData = { ...d };
+      if (kind === "creditCards") {
+        // Ensure creditCards exists
+        if (!updatedData.creditCards) {
+          updatedData.creditCards = creditCardsData;
+        }
+        updatedData[kind] = updatedData[kind].map((r) => (r.id === id ? { ...r, ...patch } : r));
+      } else {
+        updatedData[kind] = updatedData[kind].map((r) => (r.id === id ? { ...r, ...patch } : r));
+      }
+      return updatedData;
+    });
   }
 
   function addRow(kind) {
@@ -117,6 +202,29 @@ export default function BudgetPlanner() {
         { id: uuid(), name: "Transport", amount: 0 },
         { id: uuid(), name: "Subscriptions", amount: 0 },
       ],
+      creditCards: [
+        { 
+          id: uuid(), 
+          name: "Chase Freedom Unlimited", 
+          creditLimit: 12500, 
+          lastStatementBalance: 0, 
+          available: 0 
+        },
+        { 
+          id: uuid(), 
+          name: "Chase Freedom Flex", 
+          creditLimit: 2000, 
+          lastStatementBalance: 0, 
+          available: 0 
+        },
+        { 
+          id: uuid(), 
+          name: "Chase Sapphire Preferred", 
+          creditLimit: 5000, 
+          lastStatementBalance: 0, 
+          available: 0 
+        },
+      ],
       note: "",
       currency: "USD",
     });
@@ -127,7 +235,12 @@ export default function BudgetPlanner() {
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/80 border-b border-neutral-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Monthly Budget Planner</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Monthly Budget Planner</h1>
+            <div className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={resetAll}
@@ -253,6 +366,83 @@ export default function BudgetPlanner() {
           <div className="mt-4 pt-4 border-t border-neutral-200 flex items-center justify-between">
             <span className="text-sm text-neutral-500">Total Expenses</span>
             <span className="text-lg font-semibold">{fmt.format(totalExpenses)}</span>
+          </div>
+        </section>
+
+        {/* Credit Cards Section */}
+        <section className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-neutral-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Credit Card Spending</h2>
+            <div className="text-sm text-neutral-500">
+              Total: <span className="font-semibold">{fmt.format(totalCreditCardSpending)}</span>
+            </div>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-3">
+            {creditCardSpending.map((card) => (
+              <div key={card.id} className="bg-neutral-50 rounded-xl p-4 border border-neutral-200">
+                <h3 className="font-semibold text-sm mb-3 text-neutral-800">{card.name}</h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">Credit Limit</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-neutral-500">$</span>
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                        value={card.creditLimit}
+                        onChange={(e) => updateRow("creditCards", card.id, { creditLimit: Number(e.target.value) })}
+                        min={0}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">Last Statement Balance</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-neutral-500">$</span>
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                        value={card.lastStatementBalance}
+                        onChange={(e) => updateRow("creditCards", card.id, { lastStatementBalance: Number(e.target.value) })}
+                        min={0}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">Available Credit</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-neutral-500">$</span>
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                        value={card.available}
+                        onChange={(e) => updateRow("creditCards", card.id, { available: Number(e.target.value) })}
+                        min={0}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-neutral-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-neutral-500">Total Spent</span>
+                      <span className={`font-semibold text-sm ${card.totalSpent > 0 ? 'text-red-600' : 'text-neutral-600'}`}>
+                        {fmt.format(card.totalSpent)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-neutral-500">Utilization</span>
+                      <span className="text-xs font-medium text-neutral-600">
+                        {card.creditLimit > 0 ? Math.round((card.totalSpent / card.creditLimit) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
