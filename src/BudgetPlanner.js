@@ -54,15 +54,15 @@ export default function BudgetPlanner() {
     creditCards: [
       { 
         id: uuid(), 
-        name: "Chase Freedom Unlimited", 
-        creditLimit: 12500, 
+        name: "Chase Freedom Flex", 
+        creditLimit: 2000, 
         lastStatementBalance: 0, 
         available: 0 
       },
       { 
         id: uuid(), 
-        name: "Chase Freedom Flex", 
-        creditLimit: 2000, 
+        name: "Chase Freedom Unlimited", 
+        creditLimit: 12500, 
         lastStatementBalance: 0, 
         available: 0 
       },
@@ -83,15 +83,15 @@ export default function BudgetPlanner() {
     return data.creditCards || [
       { 
         id: uuid(), 
-        name: "Chase Freedom Unlimited", 
-        creditLimit: 12500, 
+        name: "Chase Freedom Flex", 
+        creditLimit: 2000, 
         lastStatementBalance: 0, 
         available: 0 
       },
       { 
         id: uuid(), 
-        name: "Chase Freedom Flex", 
-        creditLimit: 2000, 
+        name: "Chase Freedom Unlimited", 
+        creditLimit: 12500, 
         lastStatementBalance: 0, 
         available: 0 
       },
@@ -207,15 +207,15 @@ export default function BudgetPlanner() {
       creditCards: [
         { 
           id: uuid(), 
-          name: "Chase Freedom Unlimited", 
-          creditLimit: 12500, 
+          name: "Chase Freedom Flex", 
+          creditLimit: 2000, 
           lastStatementBalance: 0, 
           available: 0 
         },
         { 
           id: uuid(), 
-          name: "Chase Freedom Flex", 
-          creditLimit: 2000, 
+          name: "Chase Freedom Unlimited", 
+          creditLimit: 12500, 
           lastStatementBalance: 0, 
           available: 0 
         },
@@ -231,6 +231,8 @@ export default function BudgetPlanner() {
       currency: "USD",
     });
   }
+
+
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
